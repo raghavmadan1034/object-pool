@@ -1,0 +1,41 @@
+# Build output
+build/
+build-*/
+out/
+cmake-build-*/
+_deps/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+
+# Compiled artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+*.ilk
+*.exp
+
+# Benchmark output
+*.json
+!compile_commands.json
+
+# Editors / IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+
+# Competitive-programming scratch (VS Code "Competitive Programming Helper")
+.cph/
+x.cpp
+y.cpp
+err.txt
+
+# Throwaway dependency probe
+.gbprobe/
