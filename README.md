@@ -18,8 +18,7 @@ pool.release(p);                              // O(1): ~Particle(), push the fre
 ```
 
 Measured on the machine described below: **0.98 ns** per acquire+release against **20.4 ns**
-for `new`/`delete` — about **20x**, with the variance collapsed from a long tail to
-roughly ±12%.
+for `new`/`delete` — about **20x**.
 
 ---
 
@@ -262,11 +261,16 @@ pool_benchmark --benchmark_repetitions=15 --benchmark_report_aggregates_only=tru
 
 ### Reading these honestly
 
-**The variance matters more than the mean.** The pool has no size-class lookup, no arena
-lock, and no path that falls through to the OS. On the unpinned run of the same binary the
-allocator's coefficient of variation was ~53% with a median of 40 ns and a mean of 51 ns —
-a long right tail. The pool stayed near its median. For latency-sensitive code the useful
-claim is not "faster on average", it is "the p99 stops moving."
+**This benchmark does not measure tail latency, and no claim here depends on it.**
+Google Benchmark reports mean, median and standard deviation *across repetitions*, and
+each repetition is itself an average over millions of iterations. That averaging hides the
+per-operation outliers a latency-sensitive caller actually cares about. The coefficient of
+variation came out similar for both allocators — 12.4% pool vs 9.8% heap when pinned,
+55.5% vs 53.7% unpinned — which says the *machine* was noisy, not that either allocator
+has a tighter distribution. The structural case for the pool's determinism (no size-class
+lookup, no arena lock, nothing that can fall through to the OS) is sound, but it is an
+argument, not a measurement. Earning a p99/p99.9 number requires per-operation timestamps
+and a histogram, which this suite does not yet collect.
 
 **Shuffled release costs the pool 2x, and this is the LIFO effect made visible.**
 Per-operation, batch churn is 1.44 ns and shuffled release is 2.91 ns. Releasing in an
@@ -353,5 +357,10 @@ Verified on GCC 16.1 (`-Wall -Wextra -Wpedantic`, zero warnings) and MSVC 19.4x
 
 ## Status
 
-`include/object_pool.hpp` is complete and tested. `include/pool_handle.hpp` is in progress;
-`ObjectPool::make()` lands with it. Next up: converting `tests/smoke.cpp` to Catch2.
+The library is feature-complete: `include/object_pool.hpp` and `include/pool_handle.hpp` are
+both done, and `ObjectPool::make()` ties them together.
+
+Remaining work is around the library rather than in it. `tests/smoke.cpp` currently covers only
+the raw `acquire`/`release` API — the handle's move semantics, `reset()`, `detach()` and `swap()`
+have no coverage yet, and that is the next gap to close. After that: worked examples under
+`examples/`, and converting the test suite to Catch2.
